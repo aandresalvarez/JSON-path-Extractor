@@ -245,8 +245,7 @@ def search_key_in_all_levels(json_obj: Union[dict, list], paths: List[List[Union
 
     return results
 
-
-def construct_table_with_keys(orcid: str, json_obj: dict, search_value: str, keys_to_search: List[str]) -> pd.DataFrame:
+def construct_table_with_keys(json_obj: dict, search_value: str, keys_to_search: List[str], orcid: str) -> pd.DataFrame:
     """
     Constructs a table with the specified keys and the value that was searched for in the JSON object.
     The function searches for the specified value in the JSON object and then searches for each key in the
@@ -254,55 +253,22 @@ def construct_table_with_keys(orcid: str, json_obj: dict, search_value: str, key
     the function adds the row to the table data. The resulting table is returned as a pandas DataFrame.
 
     Args:
-        orcid (str): The ORCID to retrieve works for.
         json_obj (dict): The JSON object to search for the specified value and keys.
         search_value (str): The value to search for in the JSON object.
         keys_to_search (List[str]): The list of keys to search for at all levels relative to the path leading
             to the value.
+        orcid (str): The value to be added as the first column of the resulting DataFrame.
 
     Returns:
         pd.DataFrame: A pandas DataFrame containing the extracted data.
 
     Example:
-        Given the following JSON object:
-        {
-            "name": "John",
-            "age": 30,
-            "city": "New York",
-            "pets": [
-                {
-                    "name": "Rufus",
-                    "type": "dog"
-                },
-                {
-                    "name": "Mittens",
-                    "type": "cat"
-                }
-            ]
-        }
+        ...
 
-        To construct a table with the keys "name" and "type" for the value "Mittens", the following code can be used:
-
-        >>> json_obj = {
-        ...     "name": "John",
-        ...     "age": 30,
-        ...     "city": "New York",
-        ...     "pets": [
-        ...         {
-        ...             "name": "Rufus",
-        ...             "type": "dog"
-        ...         },
-        ...         {
-        ...             "name": "Mittens",
-        ...             "type": "cat"
-        ...         }
-        ...     ]
-        ... }
-        >>> search_value = "Mittens"
-        >>> keys_to_search = ["name", "type"]
-        >>> construct_table_with_keys(json_obj, search_value, keys_to_search)
-            orcid   values      name    type
-        0  123456  Mittens  Mittens     cat
+        >>> orcid_value = "0000-0001-1234-5678"
+        >>> construct_table_with_keys(json_obj, search_value, keys_to_search, orcid_value)
+            orcid     values      name    type
+        0  0000-0001-1234-5678  Mittens  Mittens     cat
     """
     # Find all paths leading to the specified value using the find_all_paths_of_value function
     paths_to_search_value = list(find_all_paths_of_value(search_value, json_obj))
@@ -315,7 +281,7 @@ def construct_table_with_keys(orcid: str, json_obj: dict, search_value: str, key
 
     # Iterate through each path found and use search_key_in_all_levels to find the specified keys
     for path in paths_to_search_value:
-        row_data = [orcid, search_value]
+        row_data = [orcid, search_value] # Include orcid value as the first item in the row
         all_keys_found = True
         
         # Search for each key in keys_to_search at all levels relative to the path
@@ -333,12 +299,13 @@ def construct_table_with_keys(orcid: str, json_obj: dict, search_value: str, key
             unique_rows.add(row_tuple)
             table_data_all_levels.append(row_data)
 
-    # Define columns for the DataFrame, including the specified keys
+    # Define columns for the DataFrame, including the orcid and specified keys
     columns = ['orcid', 'values'] + keys_to_search
 
     # Convert the extracted data to a pandas DataFrame for better visualization
     table_df_all_levels = pd.DataFrame(table_data_all_levels, columns=columns)
     return table_df_all_levels
+
 
 
 
@@ -421,7 +388,7 @@ with open(file, 'r') as f:
 
 # Call the construct_table_with_keys function to get a pandas DataFrame 
 #see the function definition above to learn how it works
-table_df = construct_table_with_keys(data, search_value, keys_to_search)
+table_df = construct_table_with_keys(data, search_value, keys_to_search, file)
 # Print the pandas DataFrame
 print(table_df)
 #save the dataframe as a csv file
