@@ -62,8 +62,6 @@ def extract_data(json_data: dict, target_value: str, keys_to_extract: List[str],
 
 
 
-
-
 # Get publications for ORCID
 orcid='0000-0003-0232-2196'
 json_obj = fetch_publications(orcid)
@@ -78,4 +76,4 @@ df = extract_data(json_obj, search_value, keys_to_search, orcid)
 print(df)
 
 # Save DataFrame to CSV
-df.to_csv('single_file_output.csv', index=False)
+df.to_csv('example1_single_orcid_output.csv', index=False)
