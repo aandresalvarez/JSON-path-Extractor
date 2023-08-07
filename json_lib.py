@@ -1,9 +1,119 @@
 
 import pandas as pd
 from datetime import datetime
+from typing import Tuple
 from collections import namedtuple
 from typing import List, Union, Any, Generator
+from difflib import SequenceMatcher
 
+
+
+def similarity_ratio(s1: str, s2: str) -> float:
+    # Helper function to calculate the similarity ratio between two strings for fuzzy matching.
+    return SequenceMatcher(None, s1, s2).ratio()
+
+def find_all_paths_of_value_fuzzy(value: Any, input_dict: Union[dict, list], path: List[Union[int, str]] = None, match_type: str = "ignore_case", fuzzy_threshold: float = 0.8) -> Generator[Tuple[List[Union[int, str]], Any], None, None]:
+    """
+    Recursively searches for a value in a nested dictionary or list and returns a generator yielding all paths to the value along with the value found.
+
+    Parameters:
+    - value (Any): The value to search for.
+    - input_dict (Union[dict, list]): The dictionary or list to search in.
+    - path (List[Union[int, str]], optional): The path to the current location in the dictionary or list. Defaults to None.
+    - match_type (str, optional): The type of match to perform ("exact", "ignore_case", or "fuzzy"). Defaults to "ignore_case".
+    - fuzzy_threshold (float, optional): The similarity threshold for fuzzy matching. Defaults to 0.8.
+
+    Returns:
+    - Generator yielding tuples containing lists of keys/indices forming the paths to the value and the value found.
+    """
+    
+    if path is None:
+        path = []  # Initialize path if None
+    
+    compare_value = value
+    if match_type == "ignore_case" and isinstance(value, str):
+        compare_value = value.lower()
+    
+    if isinstance(input_dict, dict):
+        for k, v in input_dict.items():
+            new_path = path + [k]
+            compare_v = v
+            
+            # Convert to lowercase for case-insensitive matching
+            if match_type == "ignore_case" and isinstance(v, str):
+                compare_v = v.lower()
+            
+            # Check for exact or case-insensitive match, or fuzzy match if specified
+            if (match_type != "fuzzy" and compare_v == compare_value) or (match_type == "fuzzy" and isinstance(v, str) and similarity_ratio(v, value) >= fuzzy_threshold):
+                yield (new_path, v)  # Yield path and value
+            elif isinstance(v, (dict, list)):  # Recurse into nested dictionary or list
+                yield from find_all_paths_of_value_fuzzy(value, v, new_path, match_type, fuzzy_threshold)
+    elif isinstance(input_dict, list):
+        for idx, item in enumerate(input_dict):
+            new_path = path + [idx]
+            compare_item = item
+            
+            # Convert to lowercase for case-insensitive matching
+            if match_type == "ignore_case" and isinstance(item, str):
+                compare_item = item.lower()
+            
+            # Check for exact or case-insensitive match, or fuzzy match if specified
+            if (match_type != "fuzzy" and compare_item == compare_value) or (match_type == "fuzzy" and isinstance(item, str) and similarity_ratio(item, value) >= fuzzy_threshold):
+                yield (new_path, item)  # Yield path and value
+            elif isinstance(item, (dict, list)):  # Recurse into nested dictionary or list
+                yield from find_all_paths_of_value_fuzzy(value, item, new_path, match_type, fuzzy_threshold)
+
+from typing import Any, Union, List, Generator, Tuple
+
+def find_all_paths_of_value_substring(value: Any, input_dict: Union[dict, list], path: List[Union[int, str]] = None, match_type: str = "ignore_case") -> Generator[Tuple[List[Union[int, str]], Any], None, None]:
+    """
+    Recursively searches for a value in a nested dictionary or list and returns a generator yielding all paths to the value along with the value found.
+
+    Parameters:
+    - value (Any): The value to search for.
+    - input_dict (Union[dict, list]): The dictionary or list to search in.
+    - path (List[Union[int, str]], optional): The path to the current location in the dictionary or list. Defaults to None.
+    - match_type (str, optional): The type of match to perform ("exact", "ignore_case", or "substring"). Defaults to "ignore_case".
+
+    Returns:
+    - Generator yielding tuples containing lists of keys/indices forming the paths to the value and the value found.
+    """
+    
+    if path is None:
+        path = []  # Initialize path if None
+
+    compare_value = value
+    if match_type in ("ignore_case", "substring") and isinstance(value, str):
+        compare_value = value.lower()
+
+    if isinstance(input_dict, dict):
+        for k, v in input_dict.items():
+            new_path = path + [k]
+            compare_v = v
+            
+            # Convert to lowercase for case-insensitive or substring matching
+            if match_type in ("ignore_case", "substring") and isinstance(v, str):
+                compare_v = v.lower()
+            
+            # Check for exact or case-insensitive match, or substring match if specified
+            if (match_type not in ("substring") and compare_v == compare_value) or (match_type == "substring" and isinstance(v, str) and compare_value in compare_v):
+                yield (new_path, v)  # Yield path and value
+            elif isinstance(v, (dict, list)):  # Recurse into nested dictionary or list
+                yield from find_all_paths_of_value_substring(value, v, new_path, match_type)
+    elif isinstance(input_dict, list):
+        for idx, item in enumerate(input_dict):
+            new_path = path + [idx]
+            compare_item = item
+            
+            # Convert to lowercase for case-insensitive or substring matching
+            if match_type in ("ignore_case", "substring") and isinstance(item, str):
+                compare_item = item.lower()
+            
+            # Check for exact or case-insensitive match, or substring match if specified
+            if (match_type not in ("substring") and compare_item == compare_value) or (match_type == "substring" and isinstance(item, str) and compare_value in compare_item):
+                yield (new_path, item)  # Yield path and value
+            elif isinstance(item, (dict, list)):  # Recurse into nested dictionary or list
+                yield from find_all_paths_of_value_substring(value, item, new_path, match_type)
 
 
 def find_all_paths_of_value(value: Any, input_dict: Union[dict, list], path: List[Union[int, str]] = None) -> Generator[List[Union[int, str]], None, None]:
@@ -59,6 +169,8 @@ def find_all_paths_of_value(value: Any, input_dict: Union[dict, list], path: Lis
                 yield new_path
             elif isinstance(item, (dict, list)):
                 yield from find_all_paths_of_value(value, item, new_path)
+
+
 
 
 def extract_parent_object(json_obj: Union[dict, list], path: List[Union[int, str]], key_or_level: Union[str, int] = None, level: int = None, key: str = None) -> Union[Any, str]:
