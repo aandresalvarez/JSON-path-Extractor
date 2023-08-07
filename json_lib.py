@@ -40,6 +40,10 @@ def find_all_paths_of_value(value: Any, input_dict: Union[dict, list], path: Lis
     if isinstance(input_dict, dict):
         for k, v in input_dict.items():
             new_path = path + [k]
+            if isinstance(v, str):
+                v = v.lower()
+            if isinstance(value, str):
+                value = value.lower()
             if v == value:
                 yield new_path
             elif isinstance(v, (dict, list)):
@@ -47,6 +51,10 @@ def find_all_paths_of_value(value: Any, input_dict: Union[dict, list], path: Lis
     elif isinstance(input_dict, list):
         for idx, item in enumerate(input_dict):
             new_path = path + [idx]
+            if isinstance(item, str):
+                item = item.lower()
+            if isinstance(value, str):
+                value = value.lower()
             if item == value:
                 yield new_path
             elif isinstance(item, (dict, list)):
