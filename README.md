@@ -14,7 +14,7 @@ This project uses the following Python libraries:
 
 ## Quick Start
 
-1. Install the required dependencies by running `pip install -r requirements.txt`.
+1. Install the required dependencies by running `pip install pandas` and `pip install requests`.
 
 2. Import the `json_lib` module into your Python script:
 
